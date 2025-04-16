@@ -1,0 +1,17 @@
+Verification Results - LS1 Algorithm
+Timeout: 60 seconds, Seed: 42
+--------------------------------------------------------------------------------
+Instance             Optimal    LS1        Gap        Time (s)   Result
+--------------------------------------------------------------------------------
+test1                2          N/A        N/A        0.05       FAILED
+test2                2          N/A        N/A        0.02       FAILED
+test3                6          N/A        N/A        0.02       FAILED
+test4                4          N/A        N/A        0.02       FAILED
+test5                4          N/A        N/A        0.02       FAILED
+--------------------------------------------------------------------------------
+
+Summary:
+Total instances: 5
+Optimal solutions: 0
+Sub-optimal solutions: 0
+Failed runs: 5
