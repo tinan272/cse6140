@@ -1,4 +1,5 @@
 LS1
+Instance        Optimal    Found      Status
 small1.in       5          5          ✅ Match
 small10.in      2          2          ✅ Match
 small11.in      4          4          ✅ Match
@@ -18,7 +19,6 @@ small7.in       3          3          ✅ Match
 small8.in       2          2          ✅ Match
 small9.in       3          3          ✅ Match
 
-Instance        Optimal    Found      Status
 large1.in       50         50         ✅ Match
 large10.in      221        316        ⚠️ Off by 95
 large11.in      40         56         ⚠️ Off by 16
@@ -55,7 +55,7 @@ small8.in       2          2          ✅ Match
 small9.in       3          4          ⚠️ Off by 1
 
 large1.in       50         50         ✅ Match
-large10.in      221        316        ⚠️ Off by 95
+large10.in      221        318        ⚠️ Off by 97
 large11.in      40         56         ⚠️ Off by 16
 large12.in      15         18         ⚠️ Off by 3
 large2.in       19         20         ⚠️ Off by 1
@@ -63,7 +63,7 @@ large3.in       15         17         ⚠️ Off by 2
 large4.in       91         152        ⚠️ Off by 61
 large5.in       6          8          ⚠️ Off by 2
 large6.in       6          7          ⚠️ Off by 1
-large7.in       95         171        ⚠️ Off by 76
+large7.in       95         172        ⚠️ Off by 77
 large8.in       5          6          ⚠️ Off by 1
 large9.in       14         16         ⚠️ Off by 2
 
