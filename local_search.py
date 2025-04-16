@@ -526,6 +526,10 @@ def parse_args():
     parser.add_argument('-time', required=True, type=float, help='Cutoff time in seconds')
     parser.add_argument('-seed', required=True, type=int, help='Random seed')
     
+    # for verification files!!
+    parser.add_argument('-sol', help='Solution output prefix', default='solutions/LS1/large')
+
+    
     return parser.parse_args()
 
 def main():
@@ -533,13 +537,15 @@ def main():
     Main function.
     """
     args = parse_args()
+    solution_filename = f"{args.sol}.sol"
+    trace_filename = f"{args.sol}.trace"
     problem = MinimumSetCover(args.inst)
     instance_name = os.path.basename(args.inst).split('.')[0]
     
     if args.alg == 'LS1':
-        output_prefix = f"solutions/{instance_name}_LS1_{int(args.time)}_{args.seed}"
+        output_prefix = f"solutions/LS1/large/{instance_name}_LS1_{int(args.time)}_{args.seed}"
     else:  # LS2
-        output_prefix = f"solutions/LS2/{instance_name}_LS2_{int(args.time)}_{args.seed}"
+        output_prefix = f"solutions/LS2/large/{instance_name}_LS2_{int(args.time)}_{args.seed}"
     
     if args.alg == 'LS1':
         solution, quality = problem.hill_climbing(args.time, args.seed, output_prefix)

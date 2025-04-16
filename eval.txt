@@ -1,0 +1,69 @@
+LS1
+small1.in       5          5          ✅ Match
+small10.in      2          2          ✅ Match
+small11.in      4          4          ✅ Match
+small12.in      3          3          ✅ Match
+small13.in      2          2          ✅ Match
+small14.in      2          2          ✅ Match
+small15.in      2          2          ✅ Match
+small16.in      2          2          ✅ Match
+small17.in      2          2          ✅ Match
+small18.in      2          2          ✅ Match
+small2.in       3          3          ✅ Match
+small3.in       5          5          ✅ Match
+small4.in       4          4          ✅ Match
+small5.in       5          5          ✅ Match
+small6.in       3          3          ✅ Match
+small7.in       3          3          ✅ Match
+small8.in       2          2          ✅ Match
+small9.in       3          3          ✅ Match
+
+Instance        Optimal    Found      Status
+large1.in       50         50         ✅ Match
+large10.in      221        316        ⚠️ Off by 95
+large11.in      40         56         ⚠️ Off by 16
+large12.in      15         18         ⚠️ Off by 3
+large2.in       19         20         ⚠️ Off by 1
+large3.in       15         17         ⚠️ Off by 2
+large4.in       91         152        ⚠️ Off by 61
+large5.in       6          8          ⚠️ Off by 2
+large6.in       6          7          ⚠️ Off by 1
+large7.in       95         171        ⚠️ Off by 76
+large8.in       5          6          ⚠️ Off by 1
+large9.in       14         16         ⚠️ Off by 2
+--------------------------------------------------
+LS2
+Summary:
+Instance        Optimal    Found      Status
+small1.in       5          5          ✅ Match
+small10.in      2          3          ⚠️ Off by 1
+small11.in      4          4          ✅ Match
+small12.in      3          4          ⚠️ Off by 1
+small13.in      2          2          ✅ Match
+small14.in      2          2          ✅ Match
+small15.in      2          3          ⚠️ Off by 1
+small16.in      2          3          ⚠️ Off by 1
+small17.in      2          3          ⚠️ Off by 1
+small18.in      2          3          ⚠️ Off by 1
+small2.in       3          3          ✅ Match
+small3.in       5          5          ✅ Match
+small4.in       4          4          ✅ Match
+small5.in       5          5          ✅ Match
+small6.in       3          3          ✅ Match
+small7.in       3          3          ✅ Match
+small8.in       2          2          ✅ Match
+small9.in       3          4          ⚠️ Off by 1
+
+large1.in       50         50         ✅ Match
+large10.in      221        316        ⚠️ Off by 95
+large11.in      40         56         ⚠️ Off by 16
+large12.in      15         18         ⚠️ Off by 3
+large2.in       19         20         ⚠️ Off by 1
+large3.in       15         17         ⚠️ Off by 2
+large4.in       91         152        ⚠️ Off by 61
+large5.in       6          8          ⚠️ Off by 2
+large6.in       6          7          ⚠️ Off by 1
+large7.in       95         171        ⚠️ Off by 76
+large8.in       5          6          ⚠️ Off by 1
+large9.in       14         16         ⚠️ Off by 2
+
