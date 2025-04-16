@@ -6,7 +6,7 @@ LS1. Hill Climbing w/ Random Restarts
 LS2. Simulated Annealing
 
 run with:
-    python minimum_set_cover.py -inst <filename> -alg [LS1|LS2] -time <cutoff in seconds> -seed <random seed>
+    python local_search.py -inst data/<test>.in -alg [LS1|LS2] -time 600 -seed <random seed>
 """
 
 import argparse
@@ -393,12 +393,11 @@ class MinimumSetCover:
             in_current_solution = neighbor[flip_idx]
             
             if in_current_solution:
-                # Try removing the subset (if coverage is maintained)
-                neighbor[flip_idx] = False
+                neighbor[flip_idx] = False #remove subset if coverage maintained else revert
                 _, is_still_covering = self.evaluate_solution(neighbor)
                 
                 if not is_still_covering:
-                    neighbor[flip_idx] = True  # Revert if coverage breaks
+                    neighbor[flip_idx] = True 
             else:
                 neighbor[flip_idx] = True  # add subset
             
@@ -543,7 +542,7 @@ def main():
     instance_name = os.path.basename(args.inst).split('.')[0]
     
     if args.alg == 'LS1':
-        output_prefix = f"solutions/LS1/large/{instance_name}_LS1_{int(args.time)}_{args.seed}"
+        output_prefix = f"solutions/LS1/large/{instance_name}_LS1_{int(args.time)}_{args.seed}" # CHANGE THESE DEPENDING ON {DATASIZE} & LS
     else:  # LS2
         output_prefix = f"solutions/LS2/large/{instance_name}_LS2_{int(args.time)}_{args.seed}"
     
