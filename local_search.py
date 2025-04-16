@@ -126,12 +126,11 @@ class MinimumSetCover:
         
         start_time = time.time()
         
-        # Initial solution (greedy + ensure coverage)
+        # init solution (greedy + ensure coverage)
         current_solution = self.generate_initial_solution()
         current_solution = self._ensure_coverage(current_solution)
         
-        # Precompute element coverage information
-        # Use a dictionary instead of a list to handle any element values
+        # precompute ele coverage info
         element_to_subsets = {}
         for i, subset in enumerate(self.subsets):
             for element in subset:
@@ -139,7 +138,7 @@ class MinimumSetCover:
                     element_to_subsets[element] = []
                 element_to_subsets[element].append(i)
         
-        # Track current coverage state
+        # track curr coverage state
         current_covered_elements = set()
         for i, selected in enumerate(current_solution):
             if selected:
@@ -154,15 +153,15 @@ class MinimumSetCover:
         self._append_to_trace_file(trace_filename, 0.0, best_quality)
         
         max_iterations_without_improvement = 1000
-        restart_probability = 0.05  # Reduced from 0.1
+        restart_probability = 0.05 #test this value out
         iterations_without_improvement = 0
         
-        # Tabu list
-        tabu_list = {}  # index -> tabu expiration iteration
-        tabu_tenure = 10  # How long an index stays in tabu list
+        # our tabu list
+        tabu_list = {}  # idx -> tabu expiration iter
+        tabu_tenure = 10  # duration idx stays in list
         iteration = 0
         
-        # Cache subset sizes for quick lookup
+        # cache subset sizes 
         subset_sizes = [len(subset) for subset in self.subsets]
         
         while time.time() - start_time < cutoff_time:
@@ -171,24 +170,23 @@ class MinimumSetCover:
             if elapsed_time >= cutoff_time:
                 break
             
-            # --- Random Restart Logic ---
+            # RANDOM RESTARTS
             if iterations_without_improvement >= max_iterations_without_improvement:
-                # More intelligent restart: preserve some of the best solution
-                if random.random() < 0.95:  # 70% chance of partial preservation
-                    # Start with best solution and perturb it
+                if random.random() < 0.95:
+                    # start w/ best solution & perturb it
                     current_solution = best_solution.copy()
                     current_covered_elements = best_covered.copy()
                     
-                    # Flip some random bits (more aggressively)
+                    # flip rando bits
                     flip_count = max(1, self.m // 10)
                     indices_to_flip = random.sample(range(self.m), flip_count)
                     
                     for i in indices_to_flip:
                         if current_solution[i]:
-                            # Try to remove, check if coverage maintained
+                            # try to remove & check if coverage maintained
                             current_solution[i] = False
                             
-                            # Update coverage
+                            # update coverage
                             affected_elements = self.subsets[i]
                             removed_elements = set()
                             
@@ -202,10 +200,9 @@ class MinimumSetCover:
                                     removed_elements.add(elem)
                             
                             if removed_elements:
-                                # Restore if coverage broken
+                                # if coverage broken, restore it
                                 current_solution[i] = True
-                            else:
-                                # Need to update coverage status for affected elements
+                            else: # update coverage status for affected
                                 for elem in affected_elements:
                                     is_covered = False
                                     for subset_idx in element_to_subsets.get(elem, []):
@@ -216,8 +213,7 @@ class MinimumSetCover:
                                         current_covered_elements.add(elem)
                                     else:
                                         current_covered_elements.discard(elem)
-                        else:
-                            # Add this subset
+                        else: #adding subset
                             current_solution[i] = True
                             current_covered_elements.update(self.subsets[i])
                 else:
@@ -225,24 +221,24 @@ class MinimumSetCover:
                 
                 current_quality = sum(current_solution)
                 iterations_without_improvement = 0
-                tabu_list = {}  # Clear tabu list on restart
+                tabu_list = {}  # clear list when restarting
             
-            # --- Neighbor Selection Strategy ---
+            # NEIGHBOR SELECTION
             potential_moves = []
             
-            # Prioritize removing subsets (reducing solution size)
+            # prioritze removing subsets (reducing solution size)
             removal_candidates = [i for i, selected in enumerate(current_solution) if selected]
             
-            # Shuffle to randomize equal-quality moves
+            # shuffle to randomize equal-quality moves
             random.shuffle(removal_candidates)
             
-            # Evaluate each potential removal
+            # eval potential removal
             for i in removal_candidates:
                 if i in tabu_list and iteration < tabu_list[i] and current_quality - 1 >= best_quality:
-                    # Skip tabu moves unless they'd lead to a new best solution
+                    # skip tabu moves unless better new best solution
                     continue
                     
-                # Check if removal would break coverage
+                # check if removal breaks coverage
                 can_remove = True
                 affected_elements = self.subsets[i]
                 
@@ -256,11 +252,10 @@ class MinimumSetCover:
                         can_remove = False
                         break
                 
-                if can_remove:
-                    # This move is legal - can remove without breaking coverage
-                    potential_moves.append((i, -1))  # (index, delta)
+                if can_remove: # w/o breaking coverage
+                    potential_moves.append((i, -1)) # (index, delta)
             
-            # If we're stuck, also consider adding subsets for diversification
+            # if stuck, consider adding subsets
             if iterations_without_improvement > 100:
                 addition_candidates = [i for i, selected in enumerate(current_solution) if not selected]
                 random.shuffle(addition_candidates)
@@ -273,17 +268,15 @@ class MinimumSetCover:
                         continue
                     potential_moves.append((i, 1))  # (index, delta)
             
-            # --- Make best move ---
+            # PERFORM BEST MOVES
             if potential_moves:
-                # Prioritize removals (negative delta)
-                potential_moves.sort(key=lambda x: x[1])
+                potential_moves.sort(key=lambda x: x[1]) # prioritize removals (negative delta)
                 best_move_idx, delta = potential_moves[0]
                 
-                # Apply the move
-                current_solution[best_move_idx] = not current_solution[best_move_idx]
+                current_solution[best_move_idx] = not current_solution[best_move_idx] #apply removal
                 
-                # Update coverage
-                if delta == -1:  # Removal
+                # update coverage
+                if delta == -1:  # removing
                     for elem in self.subsets[best_move_idx]:
                         still_covered = False
                         for subset_idx in element_to_subsets.get(elem, []):
@@ -294,14 +287,12 @@ class MinimumSetCover:
                             current_covered_elements.add(elem)
                         else:
                             current_covered_elements.discard(elem)
-                else:  # Addition
+                else:  # adding
                     current_covered_elements.update(self.subsets[best_move_idx])
                 
-                # Update quality
+                # updates
                 current_quality += delta
-                
-                # Update tabu list
-                tabu_list[best_move_idx] = iteration + tabu_tenure
+                tabu_list[best_move_idx] = iteration + tabu_tenure 
                 
                 if current_quality < best_quality:
                     best_solution = current_solution.copy()
@@ -314,11 +305,10 @@ class MinimumSetCover:
             else:
                 iterations_without_improvement += 1
             
-            # --- Early Exit if Optimal ---
-            if best_quality == 1:  # Cannot do better than selecting one subset
+            if best_quality == 1:
                 break
         
-        # Final redundancy removal
+        # redundancy removal
         best_solution = self._remove_redundant_subsets(best_solution)
         best_quality = sum(best_solution)
         
@@ -340,26 +330,23 @@ class MinimumSetCover:
         Returns:
             A new solution with redundant subsets removed
         """
-        # Convert to list for modification
-        new_solution = solution.copy()
+        new_solution = solution.copy() # convert to list
         improved = True
         
         while improved:
             improved = False
-            # Get indices of currently selected subsets
-            selected_indices = [i for i, selected in enumerate(new_solution) if selected]
+            selected_indices = [i for i, selected in enumerate(new_solution) if selected] # indices of currently selected subsets
             
             for i in selected_indices:
-                # Temporarily remove this subset
+                # temp remove this subset
                 new_solution[i] = False
                 
-                # Check if coverage is still maintained
+                # if coverage is still maintained, else put subset back 
                 covered = set()
                 for j, selected in enumerate(new_solution):
                     if selected:
                         covered.update(self.subsets[j])
                 
-                # If coverage is broken, put the subset back
                 if len(covered) != self.n:
                     new_solution[i] = True
                 else:
@@ -376,7 +363,7 @@ class MinimumSetCover:
         
         start_time = time.time()
         
-        # Initial solution (greedy + ensure coverage)
+        # init solution (greedy + ensure coverage)
         current_solution = self.generate_initial_solution()
         current_solution = self._ensure_coverage(current_solution)
         current_quality, is_covering = self.evaluate_solution(current_solution)
@@ -384,14 +371,14 @@ class MinimumSetCover:
         best_solution = current_solution.copy()
         best_quality = current_quality
         
-        # Track selected indices for the best solution
+        # track selected indices for best solution
         best_indices = [i + 1 for i, selected in enumerate(best_solution) if selected]
         
         self._append_to_trace_file(trace_filename, 0.0, best_quality)
         
-        temperature = 5_000_000.0  # Initial temperature
-        cooling_rate = 0.99        # Cooling rate
-        temperature_limit = 0.001  # Minimum temperature
+        temperature = 5_000_000.0  # init
+        cooling_rate = 0.99        # cooling rate
+        temperature_limit = 0.001  # min temp
         
         all_subset_indices = list(range(self.m))
         
@@ -413,14 +400,14 @@ class MinimumSetCover:
                 if not is_still_covering:
                     neighbor[flip_idx] = True  # Revert if coverage breaks
             else:
-                neighbor[flip_idx] = True  # Add subset
+                neighbor[flip_idx] = True  # add subset
             
             # evaluate neighbor
             neighbor_quality, _ = self.evaluate_solution(neighbor)
             delta = neighbor_quality - current_quality
             
-            # decide where to accept  neighber
-            if delta < 0:  # Always accept better solutions
+            # decide where to accept neighber
+            if delta < 0:  # always accept better solutions
                 current_solution = neighbor
                 current_quality = neighbor_quality
                 
@@ -429,7 +416,7 @@ class MinimumSetCover:
                     best_quality = current_quality
                     best_indices = [i + 1 for i, selected in enumerate(best_solution) if selected]
                     self._append_to_trace_file(trace_filename, elapsed_time, best_quality)
-            else:  # Accept worse solutions with probability
+            else:  # accept worse solutions w/ prob
                 subset_size = len(self.subsets[flip_idx])
                 importance_factor = subset_size / self.n
                 
