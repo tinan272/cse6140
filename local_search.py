@@ -174,7 +174,7 @@ class MinimumSetCover:
             # --- Random Restart Logic ---
             if iterations_without_improvement >= max_iterations_without_improvement:
                 # More intelligent restart: preserve some of the best solution
-                if random.random() < 0.7:  # 70% chance of partial preservation
+                if random.random() < 0.95:  # 70% chance of partial preservation
                     # Start with best solution and perturb it
                     current_solution = best_solution.copy()
                     current_covered_elements = best_covered.copy()
@@ -221,15 +221,7 @@ class MinimumSetCover:
                             current_solution[i] = True
                             current_covered_elements.update(self.subsets[i])
                 else:
-                    # Completely fresh restart with greedy
-                    current_solution = self.generate_initial_solution()
-                    current_solution = self._ensure_coverage(current_solution)
-                    
-                    # Recompute coverage
-                    current_covered_elements = set()
-                    for i, selected in enumerate(current_solution):
-                        if selected:
-                            current_covered_elements.update(self.subsets[i])
+                    break
                 
                 current_quality = sum(current_solution)
                 iterations_without_improvement = 0
@@ -372,6 +364,7 @@ class MinimumSetCover:
                     result[i] = True
         
         return result
+    
     def simulated_annealing(self, cutoff_time: float, random_seed: int, output_prefix: str) -> Tuple[List[bool], int]:
         """
         Simulated Annealing for Minimum Set Cover.
@@ -579,7 +572,7 @@ def main():
     instance_name = os.path.basename(args.inst).split('.')[0]
     
     if args.alg == 'LS1':
-        output_prefix = f"solutions/LS1/{instance_name}_LS1_{int(args.time)}_{args.seed}"
+        output_prefix = f"solutions/{instance_name}_LS1_{int(args.time)}_{args.seed}"
     else:  # LS2
         output_prefix = f"solutions/LS2/{instance_name}_LS2_{int(args.time)}_{args.seed}"
     
