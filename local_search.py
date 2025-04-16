@@ -319,7 +319,7 @@ class MinimumSetCover:
                 break
         
         # Final redundancy removal
-        best_solution = self._remove_redundant_subsets_efficient(best_solution, element_to_subsets)
+        best_solution = self._remove_redundant_subsets(best_solution)
         best_quality = sum(best_solution)
         
         # Write output
@@ -329,55 +329,45 @@ class MinimumSetCover:
         
         return best_solution, best_quality
 
-    def _remove_redundant_subsets_efficient(self, solution, element_to_subsets):
-        """More efficient redundancy removal that uses precomputed element_to_subsets data"""
-        modified = True
-        result = solution.copy()
-        
-        while modified:
-            modified = False
-            # Check each selected subset
-            for i in range(self.m):
-                if not result[i]:
-                    continue
-                    
-                # Try removing this subset
-                result[i] = False
-                
-                # Check if coverage is maintained
-                all_covered = True
-                for j in range(self.n):
-                    covered = False
-                    for subset_idx in element_to_subsets.get(j, []):
-                        if result[subset_idx]:
-                            covered = True
-                            break
-                    if not covered:
-                        all_covered = False
-                        break
-                
-                if all_covered:
-                    # Can safely remove this subset
-                    modified = True
-                else:
-                    # Need to put it back
-                    result[i] = True
-        
-        return result
-    
-    def simulated_annealing(self, cutoff_time: float, random_seed: int, output_prefix: str) -> Tuple[List[bool], int]:
+    def _remove_redundant_subsets(self, solution: List[bool]) -> List[bool]:
         """
-        Simulated Annealing for Minimum Set Cover.
+        Remove redundant subsets from a solution while maintaining full coverage.
+        Works for both Hill Climbing and Simulated Annealing.
         
         Args:
-            cutoff_time: Cutoff time in seconds
-            random_seed: Random seed for reproducibility
-            output_prefix: Prefix for output files
-            
+            solution: Current solution (list of booleans indicating selected subsets)
+        
         Returns:
-            Tuple of (best solution, best quality)
+            A new solution with redundant subsets removed
         """
-        # init random num generator
+        # Convert to list for modification
+        new_solution = solution.copy()
+        improved = True
+        
+        while improved:
+            improved = False
+            # Get indices of currently selected subsets
+            selected_indices = [i for i, selected in enumerate(new_solution) if selected]
+            
+            for i in selected_indices:
+                # Temporarily remove this subset
+                new_solution[i] = False
+                
+                # Check if coverage is still maintained
+                covered = set()
+                for j, selected in enumerate(new_solution):
+                    if selected:
+                        covered.update(self.subsets[j])
+                
+                # If coverage is broken, put the subset back
+                if len(covered) != self.n:
+                    new_solution[i] = True
+                else:
+                    improved = True  # Found a redundant subset
+        
+        return new_solution
+    
+    def simulated_annealing(self, cutoff_time: float, random_seed: int, output_prefix: str) -> Tuple[List[bool], int]:
         random.seed(random_seed)
         
         trace_filename = f"{output_prefix}.trace"
@@ -386,93 +376,81 @@ class MinimumSetCover:
         
         start_time = time.time()
         
-        # init w/ greedy solution
+        # Initial solution (greedy + ensure coverage)
         current_solution = self.generate_initial_solution()
-        # Make sure the initial solution covers all elements
         current_solution = self._ensure_coverage(current_solution)
         current_quality, is_covering = self.evaluate_solution(current_solution)
         
         best_solution = current_solution.copy()
         best_quality = current_quality
         
-        # record init sol
+        # Track selected indices for the best solution
+        best_indices = [i + 1 for i, selected in enumerate(best_solution) if selected]
+        
         self._append_to_trace_file(trace_filename, 0.0, best_quality)
         
-        temperature = 5_000_000.0  # init temp
-        cooling_rate = 0.99      # temp cooling rate
-        temperature_limit = 0.0  # min temp
+        temperature = 5_000_000.0  # Initial temperature
+        cooling_rate = 0.99        # Cooling rate
+        temperature_limit = 0.001  # Minimum temperature
         
-        # get ALL subset indices for random selection
         all_subset_indices = list(range(self.m))
         
-        while time.time() - start_time < cutoff_time and temperature > temperature_limit: # main loop
+        while time.time() - start_time < cutoff_time and temperature > temperature_limit:
             elapsed_time = time.time() - start_time 
-            if elapsed_time >= cutoff_time: # check time pt.1
+            if elapsed_time >= cutoff_time:
                 break
-            # generate neighbor
-            neighbor = current_solution.copy()
             
-            # randomly select subset to flip (add or remove)
+            # Generate neighbor
+            neighbor = current_solution.copy()
             flip_idx = random.choice(all_subset_indices)
             in_current_solution = neighbor[flip_idx]
             
             if in_current_solution:
-                # If subset currently selected, try to remove it (if it maintains coverage)
+                # Try removing the subset (if coverage is maintained)
                 neighbor[flip_idx] = False
                 _, is_still_covering = self.evaluate_solution(neighbor)
                 
-                if not is_still_covering: #reverting if breaks coverage
-                    neighbor[flip_idx] = True 
+                if not is_still_covering:
+                    neighbor[flip_idx] = True  # Revert if coverage breaks
             else:
-                neighbor[flip_idx] = True
+                neighbor[flip_idx] = True  # Add subset
             
-            # calc delta = change in cost
+            # evaluate neighbor
             neighbor_quality, _ = self.evaluate_solution(neighbor)
             delta = neighbor_quality - current_quality
             
-            # decision to accept neighbor
-            if delta < 0: #(1) always accept better solution,
+            # decide where to accept  neighber
+            if delta < 0:  # Always accept better solutions
                 current_solution = neighbor
                 current_quality = neighbor_quality
                 
-                if current_quality < best_quality: #(2) update if best solution improves current
+                if current_quality < best_quality:
                     best_solution = current_solution.copy()
                     best_quality = current_quality
-                    elapsed_time = time.time() - start_time
+                    best_indices = [i + 1 for i, selected in enumerate(best_solution) if selected]
                     self._append_to_trace_file(trace_filename, elapsed_time, best_quality)
-            else:  # worse solution, accept with probability
-                # calc acceptance probability based on delta & temp
-                # mod probability based on subset importance
+            else:  # Accept worse solutions with probability
                 subset_size = len(self.subsets[flip_idx])
-                total_elements = self.n
+                importance_factor = subset_size / self.n
                 
-                # degree calculation
-                importance_factor = subset_size / total_elements
-                
-                if in_current_solution:  # was in solution -> tried removing
+                if in_current_solution:  # Tried removing
                     p = math.exp(-delta * (1 + importance_factor) / temperature)
-                else:  # not in solution -> tried adding
+                else:  # Tried adding
                     p = math.exp(-delta * (1 - importance_factor) / temperature)
                 
                 if random.random() < p:
                     current_solution = neighbor
                     current_quality = neighbor_quality
             
-            # update cool down temp
-            temperature *= cooling_rate
+            temperature *= cooling_rate # cool down temp
         
         # remove redundant subsets
-        if best_solution:
-            self._remove_redundant_subsets(best_solution)
-            best_quality, _ = self.evaluate_solution(best_solution)
-                
-        # Write solution file
-        selected_indices = [i + 1 for i, selected in enumerate(best_solution) if selected]
-        if (neighbor_quality == best_quality) and (selected_indices < best_indices):
-            best_solution = neighbor.copy()
-            best_quality = neighbor_quality
+        best_solution = self._remove_redundant_subsets(best_solution)
+        best_quality = sum(best_solution)
+        best_indices = [i + 1 for i, selected in enumerate(best_solution) if selected]
+        
         solution_filename = f"{output_prefix}.sol"
-        self._write_solution_file(solution_filename, best_quality, selected_indices)
+        self._write_solution_file(solution_filename, best_quality, best_indices)
         
         return best_solution, best_quality
 
