@@ -466,6 +466,7 @@ class MinimumSetCover:
                 # if all tabu, select randomly
                 if not non_tabu_indices:
                     non_tabu_indices = all_subset_indices
+                flip_idx = random.choice(non_tabu_indices)
                 neighbor_is_selected = not current_solution[flip_idx]
                 if not neighbor_is_selected:
                     # Create temporary neighbor only when needed to check coverage
