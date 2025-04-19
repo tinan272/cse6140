@@ -672,17 +672,11 @@ def parse_args():
 
 def main():
     args = parse_args()
-    
-    # Ensure output directory exists
-    os.makedirs(os.path.dirname(args.sol), exist_ok=True)
-    
     problem = MinimumSetCover(args.inst)
-    
     if args.alg == 'LS1':
         solution, quality = problem.hill_climbing(args.time, args.seed, args.sol)
-    else:
+    else:  # LS2
         solution, quality = problem.simulated_annealing(args.time, args.seed, args.sol)
-    
     print(f"Best solution quality: {quality}")
     selected_subsets = [i + 1 for i, selected in enumerate(solution) if selected]
     print(f"Selected subsets: {selected_subsets}")
