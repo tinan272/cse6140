@@ -60,6 +60,16 @@ class MinimumSetCover:
         except Exception as e:
             print(f"Error reading input file: {e}")
             sys.exit(1)
+
+    def generate_random_solution(self) -> List[bool]:
+        """
+        Construct a random initial solution, then enforce coverage.
+        """
+        # random pick each subset with 50% probability
+        solution = [random.random() < 0.5 for _ in range(self.m)]
+        # make sure it actually covers everything
+        return self._ensure_coverage(solution)
+
     
     def evaluate_solution(self, solution: List[bool]) -> Tuple[int, bool]:
         """
@@ -120,7 +130,10 @@ class MinimumSetCover:
         random.seed(random_seed)
         np.random.seed(random_seed)
         
-        os.makedirs(os.path.dirname(output_prefix), exist_ok=True)
+        sol_dir = os.path.dirname(output_prefix)
+        if sol_dir:
+            os.makedirs(sol_dir, exist_ok=True)
+
         trace_filename = f"{output_prefix}.trace"
         with open(trace_filename, 'w') as _:
             pass
@@ -129,6 +142,8 @@ class MinimumSetCover:
         
         # init solution (greedy + ensure coverage)
         current_solution = self.generate_initial_solution()
+        #comment line below back in if you want to use random start rather than greedy
+        #current_solution = self.generate_random_solution()  
         current_solution = self._ensure_coverage(current_solution)
         
         # precompute ele coverage info
@@ -411,6 +426,8 @@ class MinimumSetCover:
         
         # init solution (greedy + ensure coverage)
         current_solution = self.generate_initial_solution()
+        #comment back in if we need random
+        #current_solution = self.generate_random_solution()
         current_solution = self._ensure_coverage(current_solution)
         current_quality, is_covering = self.evaluate_solution(current_solution)
         
@@ -421,7 +438,7 @@ class MinimumSetCover:
         elite_solutions = [(best_solution.copy(), best_quality)]
         max_elite_size = 3
         iterations_since_improvement = 0
-        stagnation_limit = 15 
+        stagnation_limit = 10
 
         # params for TABU
         tabu_list = {}  
@@ -435,7 +452,7 @@ class MinimumSetCover:
         
         temperature = 5_000_000.0
         initial_temperature = temperature
-        cooling_rate = 0.95
+        cooling_rate = 0.99
         temperature_limit = 0.001
         
         all_subset_indices = list(range(self.m))
@@ -443,6 +460,7 @@ class MinimumSetCover:
         p = 0.3 #probability p
         while time.time() - start_time < cutoff_time and temperature > temperature_limit:
             current_iteration += 1 
+            
             elapsed_time = time.time() - start_time 
             if elapsed_time >= cutoff_time:
                 break
@@ -466,7 +484,9 @@ class MinimumSetCover:
                 # if all tabu, select randomly
                 if not non_tabu_indices:
                     non_tabu_indices = all_subset_indices
+
                 flip_idx = random.choice(non_tabu_indices)
+
                 neighbor_is_selected = not current_solution[flip_idx]
                 if not neighbor_is_selected:
                     # Create temporary neighbor only when needed to check coverage
@@ -579,6 +599,8 @@ class MinimumSetCover:
         best_solution = self._remove_redundant_subsets(best_solution)
         best_quality = sum(best_solution)
         best_indices = [i + 1 for i, selected in enumerate(best_solution) if selected]
+
+        
         
         solution_filename = f"{output_prefix}.sol"
         self._write_solution_file(solution_filename, best_quality, best_indices)
@@ -655,7 +677,7 @@ class MinimumSetCover:
             quality: Solution quality
         """
         with open(filename, 'a') as f:
-            f.write(f"{timestamp:.2f} {quality}\n")
+            f.write(f"{timestamp:.4f} {quality}\n")
 
 def parse_args():
     """
@@ -672,11 +694,20 @@ def parse_args():
 
 def main():
     args = parse_args()
+    
+    # ensure output directory exists (skip if no directory component)
+    sol_dir = os.path.dirname(args.sol)
+    if sol_dir:
+        os.makedirs(sol_dir, exist_ok=True)
+
+    
     problem = MinimumSetCover(args.inst)
+    
     if args.alg == 'LS1':
         solution, quality = problem.hill_climbing(args.time, args.seed, args.sol)
-    else:  # LS2
+    else:
         solution, quality = problem.simulated_annealing(args.time, args.seed, args.sol)
+    
     print(f"Best solution quality: {quality}")
     selected_subsets = [i + 1 for i, selected in enumerate(solution) if selected]
     print(f"Selected subsets: {selected_subsets}")
