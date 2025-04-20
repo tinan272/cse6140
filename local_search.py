@@ -427,16 +427,16 @@ class MinimumSetCover:
         tabu_list = {}  
         tabu_tenure = 15  # longevity of moves in tabu list
         current_iteration = 0  # add this to track current iteration
-        tabu_cleanup_frequency = 100 #shorten run time
+        tabu_cleanup_frequency = 50000 #shorten run time
 
         # track selected indices for best solution
         best_indices = [i + 1 for i, selected in enumerate(best_solution) if selected]
         self._append_to_trace_file(trace_filename, 0.0, best_quality)
         
-        temperature = 5_000_000.0
+        temperature = 100.0         
         initial_temperature = temperature
-        cooling_rate = 0.95
-        temperature_limit = 0.001
+        cooling_rate = 0.99      
+        temperature_limit = 0.0001
         
         all_subset_indices = list(range(self.m))
         
@@ -503,10 +503,7 @@ class MinimumSetCover:
                             best_indices = [i + 1 for i, selected in enumerate(best_solution) if selected]
                             self._append_to_trace_file(trace_filename, elapsed_time, best_quality)
                     else:
-                        subset_size = len(self.subsets[flip_idx])
-                        importance_factor = subset_size / self.n
-                        
-                        accept_prob = math.exp(-delta * ((1 + importance_factor) if current_solution[flip_idx] else (1 - importance_factor)) / temperature)
+                        accept_prob = accept_prob = math.exp(-delta / temperature)
                         
                         if random.random() < accept_prob:
                             current_solution = neighbor
